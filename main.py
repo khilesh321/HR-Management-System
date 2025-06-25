@@ -57,13 +57,48 @@ def remove_employee():
 # --- ATTENDANCE FUNCTIONS ---
 
 def mark_attendance():
-    print(">> Mark Attendance")
-    # Input: employee ID, date = today, status (Present/Absent)
-    pass
+    print("\n>> Mark Attendance")
+    emp_id = input("Enter Employee ID: ")
+    
+    # Check if employee exists
+    emp_exists = any(emp["id"] == emp_id for emp in employees)
+    
+    if not emp_exists:
+        print(">> Employee not found.")
+        return
+
+    # Attendance details
+    date = str(datetime.date.today())
+    status = input("Enter Status (Present/Absent): ").strip().capitalize()
+
+    if status not in ["Present", "Absent"]:
+        print(">> Invalid status. Use 'Present' or 'Absent'.")
+        return
+
+    # Save attendance
+    record = {
+        "id": emp_id,
+        "date": date,
+        "status": status
+    }
+
+    attendance_records.append(record)
+    print(f">> Attendance marked for {emp_id} on {date} as {status}.")
+
 
 def view_attendance():
-    print(">> View Attendance Records")
-    pass
+    print("\n>> View Attendance Records")
+
+    if not attendance_records:
+        print(">> No attendance records found.")
+        return
+
+    print(f"\n{'Emp ID':<10}{'Date':<15}{'Status':<10}")
+    print("-" * 35)
+
+    for record in attendance_records:
+        print(f"{record['id']:<10}{record['date']:<15}{record['status']:<10}")
+
 
 # --- LEAVE MANAGEMENT ---
 
