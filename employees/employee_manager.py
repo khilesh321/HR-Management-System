@@ -1,6 +1,6 @@
 import datetime
 import re
-from data.storage import employees
+from data.storage import get_employees, add_employee_db, remove_employee_db
 
 def add_employee():
     print("\n>> Add Employee")
@@ -8,7 +8,7 @@ def add_employee():
     if not emp_id:
         print(">> Employee ID cannot be empty!")
         return
-    if any(emp['id'] == emp_id for emp in employees):
+    if get_employees({'id': emp_id}):
         print(">> Employee ID already exists!")
         return
     name = input("Enter Name: ").strip()
@@ -35,11 +35,12 @@ def add_employee():
         "designation": designation,
         "date_joined": date_joined
     }
-    employees.append(employee)
+    add_employee_db(employee)
     print(f">> Employee '{name}' added successfully!")
 
 def view_employees():
     print("\n>> View All Employees")
+    employees = get_employees()
     if not employees:
         print("No employees found.")
         return
@@ -61,13 +62,14 @@ def view_employees():
 def remove_employee():
     print("\n>> Remove Employee")
     emp_id = input("Enter Employee ID to remove: ")
-    for emp in employees:
-        if emp['id'] == emp_id:
-            confirm = input(f"Are you sure you want to remove {emp['name']}? (y/n): ").strip().lower()
-            if confirm == 'y':
-                employees.remove(emp)
-                print(f">> Employee '{emp['name']}' removed successfully!")
-            else:
-                print(">> Removal cancelled.")
-            return
-    print(">> Employee not found.")
+    employees = get_employees({'id': emp_id})
+    if not employees:
+        print(">> Employee not found.")
+        return
+    emp = employees[0]
+    confirm = input(f"Are you sure you want to remove {emp['name']}? (y/n): ").strip().lower()
+    if confirm == 'y':
+        remove_employee_db(emp_id)
+        print(f">> Employee '{emp['name']}' removed successfully!")
+    else:
+        print(">> Removal cancelled.")

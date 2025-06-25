@@ -1,5 +1,6 @@
 import datetime
-from data.storage import employees, attendance_records
+from data.storage import get_attendance, add_attendance_db
+from data.storage import get_employees
 
 def mark_attendance():
     print("\n>> Mark Attendance")
@@ -7,13 +8,13 @@ def mark_attendance():
     if not emp_id:
         print(">> Employee ID cannot be empty!")
         return
-    emp_exists = any(emp["id"] == emp_id for emp in employees)
+    emp_exists = get_employees({'id': emp_id})
     if not emp_exists:
         print(">> Employee not found.")
         return
     date = str(datetime.date.today())
     # Prevent duplicate attendance for the same day
-    if any(rec["id"] == emp_id and rec["date"] == date for rec in attendance_records):
+    if get_attendance({'id': emp_id, 'date': date}):
         print(f">> Attendance for {emp_id} already marked for today.")
         return
     status = input("Enter Status (Present/Absent): ").strip().capitalize()
@@ -25,11 +26,12 @@ def mark_attendance():
         "date": date,
         "status": status
     }
-    attendance_records.append(record)
+    add_attendance_db(record)
     print(f">> Attendance marked for {emp_id} on {date} as {status}.")
 
 def view_attendance():
     print("\n>> View Attendance Records")
+    attendance_records = get_attendance()
     if not attendance_records:
         print(">> No attendance records found.")
         return

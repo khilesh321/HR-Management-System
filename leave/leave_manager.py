@@ -1,5 +1,6 @@
-from data.storage import leave_requests
+from data.storage import get_leaves, add_leave_db, update_leave_status
 import datetime
+from data.storage import get_employees
 
 def is_valid_date(date_str):
     try:
@@ -9,16 +10,16 @@ def is_valid_date(date_str):
         return False
 
 def is_overlapping(emp_id, date):
-    for req in leave_requests:
-        if req['id'] == emp_id and req['date'] == date:
-            return True
-    return False
+    return bool(get_leaves({'id': emp_id, 'date': date}))
 
 def apply_leave():
     print(">> Apply for Leave")
     emp_id = input("Enter Employee ID: ").strip()
     if not emp_id:
         print(">> Employee ID cannot be empty!")
+        return
+    if not get_employees({'id': emp_id}):
+        print(">> Employee not found!")
         return
     date = input("Enter Leave Date (YYYY-MM-DD): ").strip()
     if not is_valid_date(date):
@@ -37,11 +38,12 @@ def apply_leave():
         "reason": reason,
         "status": "Pending"
     }
-    leave_requests.append(leave)
+    add_leave_db(leave)
     print(f">> Leave request submitted for {emp_id} on {date}.")
 
 def view_leave_requests():
     print(">> View Leave Requests")
+    leave_requests = get_leaves()
     if not leave_requests:
         print(">> No leave requests found.")
         return
@@ -64,10 +66,10 @@ def view_leave_requests():
         if req['status'] == 'Pending':
             action = input(f"Approve/Reject leave for {req['id']} on {req['date']}? (a/r/skip): ").strip().lower()
             if action == 'a':
-                req['status'] = 'Approved'
+                update_leave_status(req['id'], req['date'], 'Approved')
                 print(f"Leave approved for {req['id']} on {req['date']}.")
             elif action == 'r':
-                req['status'] = 'Rejected'
+                update_leave_status(req['id'], req['date'], 'Rejected')
                 print(f"Leave rejected for {req['id']} on {req['date']}.")
             else:
                 print("Skipped.")
