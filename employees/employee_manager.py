@@ -1,6 +1,7 @@
 import datetime
 import re
 from data.storage import get_employees, add_employee_db, remove_employee_db
+from data.storage import employees_col
 
 def add_employee():
     print("\n>> Add Employee")
@@ -73,3 +74,33 @@ def remove_employee():
         print(f">> Employee '{emp['name']}' removed successfully!")
     else:
         print(">> Removal cancelled.")
+
+def update_employee():
+    print("\n>> Update Employee")
+    emp_id = input("Enter Employee ID to update: ").strip()
+    employees = get_employees({'id': emp_id})
+    if not employees:
+        print(">> Employee not found.")
+        return
+    emp = employees[0]
+    print("Leave blank to keep current value.")
+    name = input(f"Enter Name [{emp['name']}]: ").strip() or emp['name']
+    email = input(f"Enter Email [{emp['email']}]: ").strip() or emp['email']
+    phone = input(f"Enter Phone [{emp['phone']}]: ").strip() or emp['phone']
+    department = input(f"Enter Department [{emp['department']}]: ").strip() or emp['department']
+    designation = input(f"Enter Designation [{emp['designation']}]: ").strip() or emp['designation']
+    # Validate email and phone if changed
+    if email != emp['email'] and not re.match(r"[^@]+@[^@]+\.[^@]+", email):
+        print(">> Invalid email format!")
+        return
+    if phone != emp['phone'] and not re.match(r"^\d{10}$", phone):
+        print(">> Invalid phone number! Must be 10 digits.")
+        return
+    employees_col.update_one({'id': emp_id}, {'$set': {
+        'name': name,
+        'email': email,
+        'phone': phone,
+        'department': department,
+        'designation': designation
+    }})
+    print(f">> Employee '{emp_id}' updated successfully!")
