@@ -4,11 +4,17 @@ from data.storage import employees
 
 def add_employee():
     print("\n>> Add Employee")
-    emp_id = input("Enter Employee ID: ")
+    emp_id = input("Enter Employee ID: ").strip()
+    if not emp_id:
+        print(">> Employee ID cannot be empty!")
+        return
     if any(emp['id'] == emp_id for emp in employees):
         print(">> Employee ID already exists!")
         return
-    name = input("Enter Name: ")
+    name = input("Enter Name: ").strip()
+    if not name:
+        print(">> Name cannot be empty!")
+        return
     email = input("Enter Email: ")
     if not re.match(r"[^@]+@[^@]+\.[^@]+", email):
         print(">> Invalid email format!")
