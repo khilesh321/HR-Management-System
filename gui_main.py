@@ -35,46 +35,55 @@ def add_employee_gui():
     win.title("Add Employee")
     win.geometry("400x500")
     win.attributes("-topmost", True)
-    # win.grab_set()  # Focus ko forcefully le leta hai
-
     entries = {}
     fields = ["ID", "Name", "Email", "Phone", "Department", "Designation"]
-    
-    # Frame ke andar form daal rahe
     form_frame = ctk.CTkFrame(win)
     form_frame.pack(pady=10, padx=10, fill="both", expand=True)
-
     for i, field in enumerate(fields):
         ctk.CTkLabel(form_frame, text=field + ":").pack(pady=(10 if i == 0 else 5, 0))
         entry = ctk.CTkEntry(form_frame)
         entry.pack(fill="x", padx=10)
         entries[field.lower()] = entry
-
-    # Submit Button fix
-    submit_button = ctk.CTkButton(form_frame, text="Submit", command=lambda: submit(entries, win))
-    submit_button.pack(pady=20)
-
-def submit(entries, win):
-    import builtins
-    old_input = builtins.input
-
-    def fake_input(prompt=""):
-        key = prompt.lower().split(" ")[2].replace(":", "") if "id" in prompt.lower() else prompt.lower().split(" ")[1].replace(":", "")
-        entry_widget = entries.get(key)
-        if entry_widget:
-            return entry_widget.get()
-        else:
-            return ""
-
-    builtins.input = fake_input
-    try:
-        add_employee()
-        mbox.showinfo("Success", "Employee added!")
+    def submit_gui():
+        from data.storage import add_employee_db, get_employees
+        import re, datetime
+        emp_id = entries['id'].get().strip()
+        name = entries['name'].get().strip()
+        email = entries['email'].get().strip()
+        phone = entries['phone'].get().strip()
+        department = entries['department'].get().strip()
+        designation = entries['designation'].get().strip()
+        # Validation
+        if not emp_id:
+            mbox.showerror("Error", "Employee ID cannot be empty!")
+            return
+        if get_employees({'id': emp_id}):
+            mbox.showerror("Error", "Employee ID already exists!")
+            return
+        if not name:
+            mbox.showerror("Error", "Name cannot be empty!")
+            return
+        if not re.match(r"[^@]+@[^@]+\.[^@]+", email):
+            mbox.showerror("Error", "Invalid email format!")
+            return
+        if not re.match(r"^\d{10}$", phone):
+            mbox.showerror("Error", "Invalid phone number! Must be 10 digits.")
+            return
+        date_joined = str(datetime.date.today())
+        employee = {
+            "id": emp_id,
+            "name": name,
+            "email": email,
+            "phone": phone,
+            "department": department,
+            "designation": designation,
+            "date_joined": date_joined
+        }
+        add_employee_db(employee)
+        mbox.showinfo("Success", f"Employee '{name}' added!")
         win.destroy()
-    except Exception as e:
-        mbox.showerror("Error", str(e))
-    finally:
-        builtins.input = old_input
+    submit_button = ctk.CTkButton(form_frame, text="Submit", command=submit_gui)
+    submit_button.pack(pady=20)
 
 def view_employees_gui():
     win = ctk.CTkToplevel(root)
@@ -101,7 +110,65 @@ def view_employees_gui():
 
 def show_attendance():
     clear_content()
-    ctk.CTkLabel(content, text="Attendance Management (Coming Soon)", font=("Arial", 20, "bold")).pack(pady=10)
+    ctk.CTkLabel(content, text="Attendance Management", font=("Arial", 20, "bold")).pack(pady=10)
+    ctk.CTkButton(content, text="Mark Attendance", command=mark_attendance_gui).pack(pady=5)
+    ctk.CTkButton(content, text="View Attendance", command=view_attendance_gui).pack(pady=5)
+
+def mark_attendance_gui():
+    win = ctk.CTkToplevel(root)
+    win.title("Mark Attendance")
+    win.geometry("400x300")
+    win.attributes("-topmost", True)
+    from data.storage import get_employees, add_attendance_db, get_attendance
+    import datetime
+    # Employee ID dropdown
+    ctk.CTkLabel(win, text="Employee ID:").pack(pady=10)
+    employees = get_employees()
+    emp_ids = [emp['id'] for emp in employees]
+    emp_id_var = ctk.StringVar(value=emp_ids[0] if emp_ids else "")
+    emp_menu = ctk.CTkOptionMenu(win, variable=emp_id_var, values=emp_ids)
+    emp_menu.pack()
+    # Status dropdown
+    ctk.CTkLabel(win, text="Status:").pack(pady=10)
+    status_var = ctk.StringVar(value="Present")
+    status_menu = ctk.CTkOptionMenu(win, variable=status_var, values=["Present", "Absent"])
+    status_menu.pack()
+    def submit_attendance():
+        emp_id = emp_id_var.get()
+        status = status_var.get()
+        date = str(datetime.date.today())
+        if not emp_id:
+            mbox.showerror("Error", "Please select an Employee ID.")
+            return
+        if get_attendance({'id': emp_id, 'date': date}):
+            mbox.showerror("Error", f"Attendance for {emp_id} already marked for today.")
+            return
+        record = {"id": emp_id, "date": date, "status": status}
+        add_attendance_db(record)
+        mbox.showinfo("Success", f"Attendance marked for {emp_id} as {status}.")
+        win.destroy()
+    ctk.CTkButton(win, text="Submit", command=submit_attendance).pack(pady=20)
+
+def view_attendance_gui():
+    win = ctk.CTkToplevel(root)
+    win.title("View Attendance")
+    win.geometry("900x500")
+    win.attributes("-topmost", True)
+    from data.storage import get_attendance
+    records = get_attendance()
+    columns = ["Emp ID", "Date", "Status"]
+    table = ctk.CTkFrame(win)
+    table.pack(pady=10, padx=10, fill="both", expand=True)
+    # Header
+    for j, col in enumerate(columns):
+        ctk.CTkLabel(table, text=col, font=("Arial", 12, "bold"), width=20).grid(row=0, column=j, padx=2, pady=2)
+    # Data rows
+    for i, rec in enumerate(records, start=1):
+        values = ['id', 'date', 'status']
+        for j, value in enumerate(values):
+            ctk.CTkLabel(table, text=rec.get(value, ''), width=20).grid(row=i, column=j, padx=2, pady=2)
+    if not records:
+        ctk.CTkLabel(table, text="No attendance records found.", font=("Arial", 14)).grid(row=1, column=0, columnspan=len(columns), pady=20)
 
 def show_leave():
     clear_content()
