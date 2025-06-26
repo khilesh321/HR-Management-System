@@ -66,28 +66,36 @@ def view_leave_requests_gui(root):
         for j, value in enumerate(values):
             ctk.CTkLabel(scroll_frame, text=req.get(value, ''), width=20).grid(row=i, column=j, padx=2, pady=2)
         if req.get('status') == 'Pending':
-            def make_action(emp_id=req['id'], date=req['date'], win=win):
+            def make_action(emp_id=req['id'], date=req['date']):
                 def approve():
+                    win.attributes('-topmost', False)
+                    from tkinter import messagebox as mbox
                     update_leave_status(emp_id, date, 'Approved')
                     mbox.showinfo("Success", f"Leave approved for {emp_id} on {date}.")
-                    win.destroy(); view_leave_requests_gui(root)
+                    win.destroy()
+                    view_leave_requests_gui(root)
                 def reject():
+                    win.attributes('-topmost', False)
+                    from tkinter import messagebox as mbox
                     update_leave_status(emp_id, date, 'Rejected')
                     mbox.showinfo("Success", f"Leave rejected for {emp_id} on {date}.")
-                    win.destroy(); view_leave_requests_gui(root)
+                    win.destroy()
+                    view_leave_requests_gui(root)
                 return approve, reject
             approve, reject = make_action()
             ctk.CTkButton(scroll_frame, text="Approve", command=approve, fg_color="green").grid(row=i, column=len(columns), padx=2, pady=2)
             ctk.CTkButton(scroll_frame, text="Reject", command=reject, fg_color="red").grid(row=i, column=len(columns)+1, padx=2, pady=2)
-        def make_delete(emp_id=req['id'], date=req['date'], win=win):
+        def make_delete(emp_id=req['id'], date=req['date']):
             def delete():
                 win.attributes('-topmost', False)
+                from tkinter import messagebox as mbox
                 result = mbox.askyesno("Confirm", f"Delete leave request for {emp_id} on {date}?")
                 win.attributes('-topmost', True)
                 if result:
                     remove_leave_db(emp_id, date)
                     mbox.showinfo("Deleted", "Leave request deleted.")
-                    win.destroy(); view_leave_requests_gui(root)
+                    win.destroy()
+                    view_leave_requests_gui(root)
             return delete
         ctk.CTkButton(scroll_frame, text="Delete", command=make_delete(), fg_color="gray").grid(row=i, column=len(columns)+2, padx=2, pady=2)
     if not leave_requests:
