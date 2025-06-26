@@ -97,7 +97,7 @@ def view_employees_gui(root):
                 ctk.CTkLabel(scroll_frame, text=emp.get(key, ''), width=13).grid(row=i, column=j, padx=2, pady=2)
         if not filtered:
             ctk.CTkLabel(scroll_frame, text="No employees found.", font=("Arial", 14)).grid(row=1, column=0, columnspan=len(columns), pady=20)
-    search_entry = ctk.CTkEntry(win, width=30)
+    search_entry = ctk.CTkEntry(win, width=60)
     search_entry.pack(side="top", pady=5)
     ctk.CTkButton(win, text="Search", command=search_employees).pack(side="top")
 
@@ -192,8 +192,8 @@ def show_employees(content, root):
     for widget in content.winfo_children():
         widget.destroy()
     ctk.CTkLabel(content, text="Employee Management", font=("Arial", 20, "bold")).pack(pady=10)
-    ctk.CTkButton(content, text="Add Employee", command=lambda: add_employee_gui(root)).pack(pady=5)
-    ctk.CTkButton(content, text="View Employees", command=lambda: view_employees_gui(root)).pack(pady=5)
-    ctk.CTkButton(content, text="Remove Employee", command=lambda: remove_employee_gui(root)).pack(pady=5)
-    ctk.CTkButton(content, text="Update Employee", command=lambda: update_employee_gui(root)).pack(pady=5)
+    ctk.CTkButton(content, text="Add Employee", command=lambda: add_employee_gui(root), fg_color="#1976D2", hover_color="#1565C0").pack(pady=5)
+    ctk.CTkButton(content, text="View Employees", command=lambda: view_employees_gui(root), fg_color="#388E3C", hover_color="#2E7D32").pack(pady=5)
+    ctk.CTkButton(content, text="Remove Employee", command=lambda: remove_employee_gui(root), fg_color="#D32F2F", hover_color="#B71C1C").pack(pady=5)
+    ctk.CTkButton(content, text="Update Employee", command=lambda: update_employee_gui(root), fg_color="#F9A825", hover_color="#F57F17").pack(pady=5)
 
