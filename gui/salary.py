@@ -34,7 +34,7 @@ def calculate_salary_gui(root):
         per_day = base_salary / 30
         deduction = per_day * absent_days
         bonus = 0
-        if absent_days == 0 and present_days > 0:
+        if absent_days == 0 and present_days > 25:
             bonus = 0.05 * base_salary
         salary = (per_day * present_days) + bonus
         slip = f"\nSalary Slip for {emp['name']} ({emp_id})\n"
