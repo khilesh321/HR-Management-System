@@ -90,7 +90,7 @@ def view_employees_gui(root):
                 ctk.CTkLabel(scroll_frame, text=emp.get(key, ''), width=15).grid(row=i, column=j, padx=2, pady=2)
         if not filtered:
             ctk.CTkLabel(scroll_frame, text="No employees found.", font=("Arial", 14)).grid(row=1, column=0, columnspan=len(columns), pady=20)
-    search_entry = ctk.CTkEntry(win, width=30)
+    search_entry = ctk.CTkEntry(win, width=60)
     search_entry.pack(side="top", pady=5)
     ctk.CTkButton(win, text="Search", command=search_employees).pack(side="top")
 
