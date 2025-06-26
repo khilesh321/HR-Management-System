@@ -94,10 +94,93 @@ def view_employees_gui(root):
     search_entry.pack(side="top", pady=5)
     ctk.CTkButton(win, text="Search", command=search_employees).pack(side="top")
 
+def remove_employee_gui(root):
+    import tkinter.messagebox as mbox
+    from data.storage import get_employees, remove_employee_db
+    win = ctk.CTkToplevel(root)
+    win.title("Remove Employee")
+    win.geometry("400x200")
+    win.attributes("-topmost", True)
+    ctk.CTkLabel(win, text="Enter Employee ID to remove:").pack(pady=10)
+    emp_id_entry = ctk.CTkEntry(win)
+    emp_id_entry.pack(pady=5)
+    def submit_remove():
+        emp_id = emp_id_entry.get().strip()
+        employees = get_employees({'id': emp_id})
+        if not employees:
+            mbox.showerror("Error", "Employee not found.")
+            return
+        emp = employees[0]
+        confirm = mbox.askyesno("Confirm", f"Are you sure you want to remove {emp['name']}?")
+        if confirm:
+            remove_employee_db(emp_id)
+            mbox.showinfo("Success", f"Employee '{emp['name']}' removed successfully!")
+            win.destroy()
+    ctk.CTkButton(win, text="Remove", command=submit_remove).pack(pady=15)
+
+def update_employee_gui(root):
+    import tkinter.messagebox as mbox
+    from data.storage import get_employees, employees_col
+    import re
+    win = ctk.CTkToplevel(root)
+    win.title("Update Employee")
+    win.geometry("400x570")
+    win.attributes("-topmost", True)
+    ctk.CTkLabel(win, text="Enter Employee ID to update:").pack(pady=10)
+    emp_id_entry = ctk.CTkEntry(win)
+    emp_id_entry.pack(pady=5)
+    form_frame = ctk.CTkFrame(win)
+    def load_employee():
+        emp_id = emp_id_entry.get().strip()
+        employees = get_employees({'id': emp_id})
+        if not employees:
+            mbox.showerror("Error", "Employee not found.")
+            return
+        emp = employees[0]
+        for widget in form_frame.winfo_children():
+            widget.destroy()
+        fields = ["Name", "Email", "Phone", "Department", "Designation"]
+        entries = {}
+        for i, field in enumerate(fields):
+            ctk.CTkLabel(form_frame, text=field + ":").pack(pady=(10 if i == 0 else 5, 0))
+            entry = ctk.CTkEntry(form_frame)
+            entry.insert(0, emp[field.lower()])
+            entry.pack(fill="x", padx=10)
+            entries[field.lower()] = entry
+        def submit_update():
+            name = entries['name'].get().strip()
+            email = entries['email'].get().strip()
+            phone = entries['phone'].get().strip()
+            department = entries['department'].get().strip()
+            designation = entries['designation'].get().strip()
+            if not name:
+                mbox.showerror("Error", "Name cannot be empty!")
+                return
+            if not re.match(r"[^@]+@[^@]+\.[^@]+", email):
+                mbox.showerror("Error", "Invalid email format!")
+                return
+            if not re.match(r"^\d{10}$", phone):
+                mbox.showerror("Error", "Invalid phone number! Must be 10 digits.")
+                return
+            employees_col.update_one({'id': emp_id}, {'$set': {
+                'name': name,
+                'email': email,
+                'phone': phone,
+                'department': department,
+                'designation': designation
+            }})
+            mbox.showinfo("Success", f"Employee '{emp_id}' updated successfully!")
+            win.destroy()
+        ctk.CTkButton(form_frame, text="Update", command=submit_update).pack(pady=15)
+        form_frame.pack(pady=10, padx=10, fill="both", expand=True)
+    ctk.CTkButton(win, text="Load", command=load_employee).pack(pady=10)
+
 def show_employees(content, root):
     for widget in content.winfo_children():
         widget.destroy()
     ctk.CTkLabel(content, text="Employee Management", font=("Arial", 20, "bold")).pack(pady=10)
     ctk.CTkButton(content, text="Add Employee", command=lambda: add_employee_gui(root)).pack(pady=5)
     ctk.CTkButton(content, text="View Employees", command=lambda: view_employees_gui(root)).pack(pady=5)
+    ctk.CTkButton(content, text="Remove Employee", command=lambda: remove_employee_gui(root)).pack(pady=5)
+    ctk.CTkButton(content, text="Update Employee", command=lambda: update_employee_gui(root)).pack(pady=5)
 
