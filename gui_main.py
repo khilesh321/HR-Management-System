@@ -23,7 +23,6 @@ def clear_content():
     for widget in content.winfo_children():
         widget.destroy()
 
-# Sidebar buttons (already correct):
 ctk.CTkButton(sidebar, text="Employees", command=lambda: show_employees(content, root)).pack(pady=10, fill="x")
 ctk.CTkButton(sidebar, text="Attendance", command=lambda: show_attendance(content, root)).pack(pady=10, fill="x")
 ctk.CTkButton(sidebar, text="Leave", command=lambda: show_leave(content, root)).pack(pady=10, fill="x")

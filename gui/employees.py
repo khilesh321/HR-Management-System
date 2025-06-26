@@ -6,17 +6,19 @@ import re, datetime
 def add_employee_gui(root):
     win = ctk.CTkToplevel(root)
     win.title("Add Employee")
-    win.geometry("400x500")
+    win.geometry("400x550")
     win.attributes("-topmost", True)
     entries = {}
-    fields = ["ID", "Name", "Email", "Phone", "Department", "Designation"]
+    fields = ["ID", "Name", "Email", "Phone", "Department", "Designation", "Experience (yrs)"]
     form_frame = ctk.CTkFrame(win)
     form_frame.pack(pady=10, padx=10, fill="both", expand=True)
     for i, field in enumerate(fields):
         ctk.CTkLabel(form_frame, text=field + ":").pack(pady=(10 if i == 0 else 5, 0))
         entry = ctk.CTkEntry(form_frame)
         entry.pack(fill="x", padx=10)
-        entries[field.lower()] = entry
+        # Use 'experience' as key for experience field
+        key = 'experience' if field.startswith('Experience') else field.lower()
+        entries[key] = entry
     def submit_gui():
         emp_id = entries['id'].get().strip()
         name = entries['name'].get().strip()
@@ -24,6 +26,7 @@ def add_employee_gui(root):
         phone = entries['phone'].get().strip()
         department = entries['department'].get().strip()
         designation = entries['designation'].get().strip()
+        experience = entries['experience'].get().strip()
         if not emp_id:
             mbox.showerror("Error", "Employee ID cannot be empty!")
             return
@@ -39,6 +42,9 @@ def add_employee_gui(root):
         if not re.match(r"^\d{10}$", phone):
             mbox.showerror("Error", "Invalid phone number! Must be 10 digits.")
             return
+        if not experience.isdigit() or int(experience) < 0:
+            mbox.showerror("Error", "Experience must be a non-negative integer!")
+            return
         date_joined = str(datetime.date.today())
         employee = {
             "id": emp_id,
@@ -47,6 +53,7 @@ def add_employee_gui(root):
             "phone": phone,
             "department": department,
             "designation": designation,
+            "experience": int(experience),
             "date_joined": date_joined
         }
         add_employee_db(employee)
@@ -58,11 +65,11 @@ def add_employee_gui(root):
 def view_employees_gui(root):
     win = ctk.CTkToplevel(root)
     win.title("View Employees")
-    win.geometry("950x500")
+    win.geometry("1050x500")
     win.attributes("-topmost", True)
     employees = get_employees()
-    columns = ["ID", "Name", "Email", "Phone", "Department", "Designation", "Date Joined"]
-    canvas = ctk.CTkCanvas(win, width=900, height=400, highlightthickness=0, bg='gray16')
+    columns = ["ID", "Name", "Email", "Phone", "Department", "Designation", "Experience (yrs)", "Date Joined"]
+    canvas = ctk.CTkCanvas(win, width=1000, height=400, highlightthickness=0, bg='gray16')
     scrollbar = ctk.CTkScrollbar(win, orientation="vertical", command=canvas.yview)
     scroll_frame = ctk.CTkFrame(canvas)
     scroll_frame.bind(
@@ -72,10 +79,10 @@ def view_employees_gui(root):
     canvas.pack(side="left", fill="both", expand=True)
     scrollbar.pack(side="right", fill="y")
     for j, col in enumerate(columns):
-        ctk.CTkLabel(scroll_frame, text=col, font=("Arial", 12, "bold"), width=15).grid(row=0, column=j, padx=2, pady=2)
+        ctk.CTkLabel(scroll_frame, text=col, font=("Arial", 12, "bold"), width=13).grid(row=0, column=j, padx=2, pady=2)
     for i, emp in enumerate(employees, start=1):
-        for j, key in enumerate(['id', 'name', 'email', 'phone', 'department', 'designation', 'date_joined']):
-            ctk.CTkLabel(scroll_frame, text=emp.get(key, ''), width=15).grid(row=i, column=j, padx=2, pady=2)
+        for j, key in enumerate(['id', 'name', 'email', 'phone', 'department', 'designation', 'experience', 'date_joined']):
+            ctk.CTkLabel(scroll_frame, text=emp.get(key, ''), width=13).grid(row=i, column=j, padx=2, pady=2)
     if not employees:
         ctk.CTkLabel(scroll_frame, text="No employees found.", font=("Arial", 14)).grid(row=1, column=0, columnspan=len(columns), pady=20)
     def search_employees():
@@ -83,14 +90,14 @@ def view_employees_gui(root):
         for widget in scroll_frame.winfo_children():
             widget.destroy()
         for j, col in enumerate(columns):
-            ctk.CTkLabel(scroll_frame, text=col, font=("Arial", 12, "bold"), width=15).grid(row=0, column=j, padx=2, pady=2)
+            ctk.CTkLabel(scroll_frame, text=col, font=("Arial", 12, "bold"), width=13).grid(row=0, column=j, padx=2, pady=2)
         filtered = [emp for emp in employees if query in emp.get('name', '').lower() or query in emp.get('id', '').lower()]
         for i, emp in enumerate(filtered, start=1):
-            for j, key in enumerate(['id', 'name', 'email', 'phone', 'department', 'designation', 'date_joined']):
-                ctk.CTkLabel(scroll_frame, text=emp.get(key, ''), width=15).grid(row=i, column=j, padx=2, pady=2)
+            for j, key in enumerate(['id', 'name', 'email', 'phone', 'department', 'designation', 'experience', 'date_joined']):
+                ctk.CTkLabel(scroll_frame, text=emp.get(key, ''), width=13).grid(row=i, column=j, padx=2, pady=2)
         if not filtered:
             ctk.CTkLabel(scroll_frame, text="No employees found.", font=("Arial", 14)).grid(row=1, column=0, columnspan=len(columns), pady=20)
-    search_entry = ctk.CTkEntry(win, width=60)
+    search_entry = ctk.CTkEntry(win, width=30)
     search_entry.pack(side="top", pady=5)
     ctk.CTkButton(win, text="Search", command=search_employees).pack(side="top")
 
@@ -124,7 +131,7 @@ def update_employee_gui(root):
     import re
     win = ctk.CTkToplevel(root)
     win.title("Update Employee")
-    win.geometry("400x570")
+    win.geometry("400x650")
     win.attributes("-topmost", True)
     ctk.CTkLabel(win, text="Enter Employee ID to update:").pack(pady=10)
     emp_id_entry = ctk.CTkEntry(win)
@@ -139,20 +146,22 @@ def update_employee_gui(root):
         emp = employees[0]
         for widget in form_frame.winfo_children():
             widget.destroy()
-        fields = ["Name", "Email", "Phone", "Department", "Designation"]
+        fields = ["Name", "Email", "Phone", "Department", "Designation", "Experience (yrs)"]
         entries = {}
         for i, field in enumerate(fields):
             ctk.CTkLabel(form_frame, text=field + ":").pack(pady=(10 if i == 0 else 5, 0))
             entry = ctk.CTkEntry(form_frame)
-            entry.insert(0, emp[field.lower()])
+            key = 'experience' if field.startswith('Experience') else field.lower()
+            entry.insert(0, str(emp.get(key, '')))
             entry.pack(fill="x", padx=10)
-            entries[field.lower()] = entry
+            entries[key] = entry
         def submit_update():
             name = entries['name'].get().strip()
             email = entries['email'].get().strip()
             phone = entries['phone'].get().strip()
             department = entries['department'].get().strip()
             designation = entries['designation'].get().strip()
+            experience = entries['experience'].get().strip()
             if not name:
                 mbox.showerror("Error", "Name cannot be empty!")
                 return
@@ -162,12 +171,16 @@ def update_employee_gui(root):
             if not re.match(r"^\d{10}$", phone):
                 mbox.showerror("Error", "Invalid phone number! Must be 10 digits.")
                 return
+            if not experience.isdigit() or int(experience) < 0:
+                mbox.showerror("Error", "Experience must be a non-negative integer!")
+                return
             employees_col.update_one({'id': emp_id}, {'$set': {
                 'name': name,
                 'email': email,
                 'phone': phone,
                 'department': department,
-                'designation': designation
+                'designation': designation,
+                'experience': int(experience)
             }})
             mbox.showinfo("Success", f"Employee '{emp_id}' updated successfully!")
             win.destroy()
